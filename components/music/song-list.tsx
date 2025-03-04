@@ -1,46 +1,34 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState } from "react"
 import { SongCard } from "./song-card"
-import { Song } from "@/types/models"
-import { useToast } from "@/components/ui/use-toast"
-import { title } from "process"
 
-export function SongList() {
-  const [songs, setSongs] = useState<Song[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-  
+interface Song {
+  _id: string;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  coverImage?: string;
+  uploadedBy: string;
+  createdAt: string;
+}
 
-  const fetchSongs = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/songs")
+interface SongListProps {
+  songs: Song[];
+  onSongUpdate?: () => void;
+  searchQuery?: string;
+}
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch songs")
-      }
+export function SongList({ songs, onSongUpdate, searchQuery }: SongListProps) {
+  const [isLoading] = useState(false)
 
-      const data: Song[] = await res.json()
-      if (Array.isArray(data)) {
-        setSongs(data)
-      } else {
-        throw new Error("Invalid data format")
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch songs",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [toast])
-
-  useEffect(() => {
-    fetchSongs()
-  }, [fetchSongs])
+  // Filter songs if searchQuery is provided
+  const filteredSongs = searchQuery
+    ? songs.filter(song => 
+        song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        song.artist.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : songs;
 
   if (isLoading) {
     return <div>Loading...</div>
@@ -48,8 +36,12 @@ export function SongList() {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {songs.map((song) => (
-        <SongCard key={song._id} Song={song} onDelete={fetchSongs} />
+      {filteredSongs.map((song) => (
+        <SongCard
+          key={song._id}
+          song={song}
+          onDelete={onSongUpdate}
+        />
       ))}
     </div>
   )

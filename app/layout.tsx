@@ -6,7 +6,7 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Music Player",
+  title: "Music App",
   description: "A modern music player built with the MERN stack",
 }
 

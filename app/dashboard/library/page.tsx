@@ -1,11 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { SongList } from "@/components/music/song-list"
+import { SongList } from "@/components/music/song-list";
 import { useToast } from "@/components/ui/use-toast"
 
+// Define the Song type
+interface Song {
+  _id: string;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  coverImage?: string;
+  uploadedBy: string;
+  createdAt: string;
+}
+
 export default function LibraryPage() {
-  const [userSongs, setUserSongs] = useState([])
+  const [userSongs, setUserSongs] = useState<Song[]>([])
   const { toast } = useToast()
 
   useEffect(() => {

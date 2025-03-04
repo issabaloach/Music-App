@@ -1,58 +1,108 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Upload } from "lucide-react";
-import { useToast } from "../ui/use-toast";
+import type React from "react"
 
-export function SongUpload() {
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const { toast } = useToast();
+import { useState } from "react"
+import { Button } from "@/src/components/ui/button"
+import { Input } from "@/src/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { Loader2 } from "lucide-react"
+
+interface SongUploadProps {
+  onSongUploaded?: () => void
+}
+
+export function SongUpload({ onSongUploaded }: SongUploadProps) {
+  const [title, setTitle] = useState("")
+  const [artist, setArtist] = useState("")
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [coverImage, setCoverImage] = useState<File | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
+
+  const uploadFile = async (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    })
+
+    if (!res.ok) {
+      throw new Error("Failed to upload file")
+    }
+
+    const data = await res.json()
+    return data.url
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
+    e.preventDefault()
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("artist", artist);
-    formData.append("file", file);
+    if (!audioFile) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select an audio file",
+      })
+      return
+    }
+
+    setIsLoading(true)
 
     try {
-      const token = localStorage.getItem("token");
+      const audioUrl = await uploadFile(audioFile)
+      let coverUrl = "/placeholder.svg"
+
+      if (coverImage) {
+        coverUrl = await uploadFile(coverImage)
+      }
+
+      const token = localStorage.getItem("token")
       const res = await fetch("/api/songs", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
-      });
+        body: JSON.stringify({
+          title,
+          artist,
+          audioUrl,
+          coverImage: coverUrl,
+        }),
+      })
 
-      if (!res.ok) throw new Error("Failed to upload song");
+      if (!res.ok) {
+        throw new Error("Failed to create song")
+      }
 
-      setTitle("");
-      setArtist("");
-      setFile(null);
-      
+      setTitle("")
+      setArtist("")
+      setAudioFile(null)
+      setCoverImage(null)
+
       toast({
         title: "Success",
         description: "Song uploaded successfully",
-      });
+      })
 
-      // Trigger a refresh of the songs list
-      window.location.reload();
+      // Call the callback if provided
+      if (onSongUploaded) {
+        onSongUploaded()
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message,
-      });
+      })
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <Card>
@@ -61,36 +111,52 @@ export function SongUpload() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            placeholder="Song Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            disabled={isLoading}
+          />
+          <Input
+            placeholder="Artist Name"
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+            required
+            disabled={isLoading}
+          />
           <div className="space-y-2">
-            <Input
-              placeholder="Song Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Input
-              placeholder="Artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
+            <label className="text-sm font-medium">Audio File</label>
             <Input
               type="file"
               accept="audio/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Song
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Cover Image (Optional)</label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              "Upload Song"
+            )}
           </Button>
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }
+

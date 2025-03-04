@@ -1,27 +1,24 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyAuth } from './lib/auth'
 
-export async function middleware(request: NextRequest) {
-  // Check if the path requires authentication
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    const token = request.cookies.get('token')?.value
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token')?.value || ''
+  const isAuthPage = request.nextUrl.pathname === '/'
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
 
-    if (!token) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  // If trying to access auth page with token, redirect to dashboard
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
-    try {
-      await verifyAuth(token)
-      return NextResponse.next()
-    } catch (error) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  // If trying to access protected route without token, redirect to login
+  if (isDashboardPage && !token) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: '/dashboard/:path*'
+  matcher: ['/', '/dashboard/:path*']
 }

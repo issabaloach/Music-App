@@ -1,43 +1,33 @@
-import { connectDB } from '@/lib/db';
-import { Song } from '@/models/Song';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server"
+import { connectDB } from "@/lib/db"
+import { Song } from "@/models/Song"
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    await connectDB();
-    
-    const song = await Song.findById(params.id);
-    
+    await connectDB()
+
+    const userId = request.headers.get("userId")
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const song = await Song.findById(params.id)
+
     if (!song) {
-      return NextResponse.json(
-        { error: 'Song not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Song not found" }, { status: 404 })
     }
 
-    // Check if user owns the song
-    const userId = req.headers.get('userId');
+    // Check if the user is the owner of the song
     if (song.uploadedBy.toString() !== userId) {
-      return NextResponse.json(
-        { error: 'Not authorized' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Not authorized to delete this song" }, { status: 403 })
     }
 
-    await song.deleteOne();
+    await Song.findByIdAndDelete(params.id)
 
-    return NextResponse.json(
-      { message: 'Song deleted successfully' },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Song deleted successfully" })
   } catch (error) {
-    console.error('Error deleting song:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error("Delete song error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+

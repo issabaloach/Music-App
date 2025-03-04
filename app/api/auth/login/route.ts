@@ -1,47 +1,64 @@
-"use client";
-
+import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { User } from '@/models/User';
-import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function POST(req: Request) {
   try {
     await connectDB();
+    
     const { email, password } = await req.json();
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
-        { message: 'Invalid credentials' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
-        { message: 'Invalid credentials' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return NextResponse.json({
+    // Create the response
+    const response = NextResponse.json({
       token,
-      userId: user._id,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.name
+      }
     });
-  } catch (error: any) {
+
+    // Set the token as an HTTP-only cookie
+    response.cookies.set({
+      name: 'token',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
+  } catch (error) {
+    console.error('Login error:', error);
     return NextResponse.json(
-      { message: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
