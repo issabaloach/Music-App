@@ -6,19 +6,50 @@ import { LoginForm } from "@/components/auth/login-form"
 import { RegisterForm } from "@/components/auth/register-form"
 import { Button } from "@/src/components/ui/button"
 import { MusicIcon } from "lucide-react"
+// Import the dashboard header and sidebar components
+import { Header } from "@/components/shared/header"
+import { Sidebar } from "@/components/shared/sidebar"
+import { Hedvig_Letters_Sans } from "next/font/google"
 
 export default function Home() {
   const [showRegister, setShowRegister] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const router = useRouter()
 
   // Check if user is already logged in
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (token) {
+      setIsLoggedIn(true)
+    }
+  }, [])
+
+  // Redirect to dashboard if logged in
+  useEffect(() => {
+    if (isLoggedIn) {
       router.push("/dashboard")
     }
-  }, [router])
+  }, [isLoggedIn, router])
 
+  // If the user is logged in, show dashboard layout
+  if (isLoggedIn) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6 bg-muted/20">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold">Welcome to your Music Dashboard</h1>
+              <p className="text-muted-foreground mt-2">Loading your personal music library...</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  // Otherwise show the login/register screen
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted p-4">
       <div className="text-center mb-8">
@@ -68,4 +99,3 @@ export default function Home() {
     </main>
   )
 }
-
