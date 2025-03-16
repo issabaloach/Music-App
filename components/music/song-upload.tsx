@@ -25,8 +25,12 @@ export function SongUpload({ onSongUploaded }: SongUploadProps) {
     const formData = new FormData()
     formData.append("file", file)
 
+    const token = localStorage.getItem("token")
     const res = await fetch("/api/upload", {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     })
 
@@ -61,6 +65,11 @@ export function SongUpload({ onSongUploaded }: SongUploadProps) {
       }
 
       const token = localStorage.getItem("token")
+
+      if (!token) {
+        throw new Error("You must be logged in to upload songs")
+      }
+
       const res = await fetch("/api/songs", {
         method: "POST",
         headers: {
@@ -76,7 +85,8 @@ export function SongUpload({ onSongUploaded }: SongUploadProps) {
       })
 
       if (!res.ok) {
-        throw new Error("Failed to create song")
+        const errorData = await res.json()
+        throw new Error(errorData.error || "Failed to create song")
       }
 
       setTitle("")
@@ -97,7 +107,7 @@ export function SongUpload({ onSongUploaded }: SongUploadProps) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred while uploading",
       })
     } finally {
       setIsLoading(false)

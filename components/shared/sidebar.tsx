@@ -4,12 +4,20 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/src/components/ui/button"
-import { MusicIcon, HomeIcon, UploadIcon, LibraryIcon } from "lucide-react"
+import { MusicIcon, HomeIcon, UploadIcon, LibraryIcon, type LucideIcon } from "lucide-react"
+
+// Define an interface for the route object
+interface Route {
+  href: string
+  icon: LucideIcon
+  label: string
+}
 
 export function Sidebar() {
   const pathname = usePathname()
 
-  const routes = [
+  // Add type annotation to the routes array
+  const routes: Route[] = [
     {
       href: "/dashboard",
       icon: HomeIcon,
@@ -32,11 +40,11 @@ export function Sidebar() {
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <MusicIcon className="h-5 w-5 text-primary" />
-          <span>Music Player</span>
+          <span>Music App</span>
         </Link>
       </div>
       <div className="space-y-1 p-2">
-        {routes.map((route) => (
+        {routes.map((route: Route) => (
           <Button
             key={route.href}
             variant={pathname === route.href ? "secondary" : "ghost"}

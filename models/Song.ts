@@ -1,5 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose"
 
+// Define the schema
 const songSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -13,13 +14,21 @@ const songSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  coverImage: {
+    type: String,
+    default: "/placeholder.svg",
+  },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    ref: "User",
+    required: false,
   },
-}, {
-  timestamps: true,
-});
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+})
 
-export const Song = mongoose.models.Song || mongoose.model('Song', songSchema);
+// Check if the model exists before creating a new one
+export const Song = mongoose.models.Song || mongoose.model("Song", songSchema)
+
