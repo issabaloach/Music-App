@@ -13,4 +13,5 @@ export interface GoogleUserData {
   name: string;
   sub: string;
   picture?: string;
+  password: string;
 }
