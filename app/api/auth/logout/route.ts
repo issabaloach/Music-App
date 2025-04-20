@@ -1,13 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server"
 
-export async function POST() {
-  const response = NextResponse.json({ success: true });
-  
+export async function GET() {
+  const response = NextResponse.redirect(new URL("/login", process.env.NEXTAUTH_URL!))
+
+  // Clear the auth cookie
   response.cookies.set({
-    name: 'token',
-    value: '',
+    name: "auth_token",
+    value: "",
     expires: new Date(0),
-  });
+    path: "/",
+  })
 
-  return response;
+  // Clear the user info cookie
+  response.cookies.set({
+    name: "user_info",
+    value: "",
+    expires: new Date(0),
+    path: "/",
+  })
+
+  return response
 }

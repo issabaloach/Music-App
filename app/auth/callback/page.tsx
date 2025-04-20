@@ -1,57 +1,35 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function AuthCallback() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const userId = searchParams.get("userId");
-    const error = searchParams.get("error");
+    // This page should only be hit if we're using the URL parameter approach
+    // If we're using cookies (the updated approach), this page won't be needed
+    const token = searchParams.get("token")
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Failed to authenticate with Google. Please try again.",
-      });
-      router.push("/");
-      return;
-    }
+    if (token) {
+      // Store the token in localStorage
+      localStorage.setItem("auth_token", token)
 
-    if (token && userId) {
-      // Store authentication data
-      localStorage.setItem("token", token);
-      localStorage.setItem("userId", userId);
-      
-      toast({
-        title: "Success",
-        description: "Successfully signed in with Google",
-      });
-      
       // Redirect to dashboard
-      router.push("/");
+      router.push("/dashboard")
     } else {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Missing authentication data. Please try again.",
-      });
-      router.push("/");
+      // No token found, redirect to login
+      router.push("/login?error=NoToken")
     }
-  }, [router, searchParams, toast]);
+  }, [router, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Processing your login...</h1>
-        <p className="text-muted-foreground">Please wait while we complete your authentication.</p>
+        <h1 className="text-2xl font-bold">Completing login...</h1>
+        <p className="mt-2">Please wait while we redirect you.</p>
       </div>
     </div>
-  );
+  )
 }
