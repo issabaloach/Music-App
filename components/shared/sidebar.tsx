@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/src/components/ui/button"
 import { MusicIcon, HomeIcon, UploadIcon, LibraryIcon, type LucideIcon } from "lucide-react"
 
-// Define an interface for the route object
 interface Route {
   href: string
   icon: LucideIcon
